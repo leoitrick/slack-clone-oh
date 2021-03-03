@@ -1,16 +1,54 @@
-import React from 'react';
+import React, { useEffect , useState } from 'react';
 import style from 'styled-components';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import ChatInput from './ChatInput';
 import ChatMessage from './ChatMessage';
+import { useParams } from 'react-router-dom';
+import db from '../firebase';
+
 
 function Chat() {
+
+    let { channelId } = useParams();
+
+    const [ channel, setChannel ] = useState();
+    const [ messages, setMessages ] = useState([]);
+
+
+    const getMessages = () => {
+        db.collection('rooms')
+        .doc(channelId)
+        .collection('messages')
+        .orderBy('timestamp', 'asc')
+        .onSnapshot((snapshot) => {
+            let messages = snapshot.docs.map((doc) => doc.data());
+            setMessages(messages);
+        })
+    } 
+
+    const getChannel = () => {
+        db.collection('rooms')
+        .doc(channelId)
+        .onSnapshot((snapshot) => {
+            console.log(snapshot.data());
+            setChannel(snapshot.data());
+            
+        })
+    }
+
+
+
+    useEffect(() => {
+        getChannel();
+        getMessages();
+    }, [channelId])
+
     return (
         <Container>
             <Header>
                 <Channel>
                     <ChannelName>
-                        # tricking
+                        {/* # {channel.name} */}
                     </ChannelName>
                     <ChannelInfo>
                         Tricking is a mix of martial arts with acrobatics

@@ -1,18 +1,22 @@
 
 import './App.css';
 import { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'; 
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import Chat from './components/Chat';
 import Login from './components/Login';
 import styled from 'styled-components';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import db from './firebase';
-  
+import { auth, provider } from "./firebase";
+
 function App() {
 
-  const [ rooms, setRooms ] = useState ([]);
-  const [ user, setUser] = useState();
+  const [rooms, setRooms] = useState([]);
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')));
+
+
+
 
   const getChannels = () => {
     db.collection('rooms').onSnapshot((snapshot) => {
@@ -21,6 +25,13 @@ function App() {
       }))
     })
 
+  }
+
+  const signOut = () => {
+    auth.signOut().then(() => {
+      localStorage.removeItem('user');
+      setUser(null);
+    })
   }
 
   useEffect(() => {
@@ -33,27 +44,29 @@ function App() {
       <Router>
         {
           !user ?
-          <Login />
-          :
-        
+            <Login setUser={setUser} />
+            :
 
-        <Container>
 
-          <Header />
-          <Main>
-            <Sidebar rooms = {rooms}/>
-            <Switch>
-            <Route path="/room">
-              <Chat />
+            <Container>
+
+              <Header user={user} signOut={signOut} />
+              <Main>
+                <Sidebar rooms={rooms} />
+                <Switch>
+                  <Route path="/room">
+                    <Chat />
+                  </Route>
+                  <Route path="/room/:channelId">
+                  </Route>
+                  <Route path="/">
+                    Select or Create Channel
             </Route>
-            <Route path="/">
-                <Login />
-            </Route>
-          </Switch>
-          </Main>
+                </Switch>
+              </Main>
 
-          </Container>
-          }
+            </Container>
+        }
       </Router>
     </div>
   );
