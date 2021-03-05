@@ -5,9 +5,10 @@ import ChatInput from './ChatInput';
 import ChatMessage from './ChatMessage';
 import { useParams } from 'react-router-dom';
 import db from '../firebase';
+import firebase from 'firebase';
 
 
-function Chat() {
+function Chat( {user} ) {
 
     let { channelId } = useParams();
 
@@ -26,11 +27,25 @@ function Chat() {
         })
     } 
 
+    const sendMessage = (text) => {
+        if(channelId) {
+            let payload = {
+                text: text,
+                user: user.name,
+                userImage: user.photo,
+                timestamp: firebase.firestore.Timestamp.now(),
+            }
+
+            db.collection("rooms").doc(channelId).collection('messages').add(payload);
+        }
+
+    }
+
     const getChannel = () => {
         db.collection('rooms')
         .doc(channelId)
         .onSnapshot((snapshot) => {
-            console.log(snapshot.data());
+            // console.log(snapshot.data());
             setChannel(snapshot.data());
             
         })
@@ -48,7 +63,7 @@ function Chat() {
             <Header>
                 <Channel>
                     <ChannelName>
-                        {/* # {channel.name} */}
+                        # { channel && channel.name}
                     </ChannelName>
                     <ChannelInfo>
                         Tricking is a mix of martial arts with acrobatics
@@ -63,9 +78,21 @@ function Chat() {
                
             </Header>
             <MessageContainer>
-                <ChatMessage />
+                {
+                    messages.length > 0 &&
+                    messages.map((data, index)=>{
+                        <ChatMessage 
+                            text={data.text}
+                            name={data.user}
+                            image={data.userImage}
+                            timestamp= {data.timestamp}
+
+                        />
+                    })
+                }
+                
             </MessageContainer>
-            <ChatInput />
+            <ChatInput sendMessage ={sendMessage} />
 
         </Container>
     )
@@ -76,6 +103,7 @@ export default Chat;
 const Container = style.div`
     display: grid;
     grid-template-rows: 64px auto min-content;
+    min-height: 0;
 `
 
 const Header = style.div`
@@ -90,6 +118,9 @@ const Header = style.div`
 `
 
 const MessageContainer = style.div`
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll; 
 `
 
 const Channel = style.div`
